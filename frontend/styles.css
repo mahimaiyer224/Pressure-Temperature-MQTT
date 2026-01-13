@@ -1,0 +1,40 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+}
+
+.grid {
+  display: flex;
+  gap: 20px;
+}
+
+.card {
+  border: 1px solid #ccc;
+  padding: 15px;
+  width: 200px;
+}
+
+.value {
+  font-size: 2em;
+}
+
+.status {
+  font-weight: bold;
+}
+
+.on {
+  color: green;
+}
+
+.off {
+  color: red;
+}
+
+.alert {
+  color: red;
+}
+
+.status-bar {
+  margin-bottom: 20px;
+  font-weight: bold;
+}

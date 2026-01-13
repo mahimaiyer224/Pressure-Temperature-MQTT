@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time IoT Sensor Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            max-width: 1400px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .connection-status { 
+            padding: 12px 24px; border-radius: 50px; font-weight: bold; font-size: 1.1em; 
+            margin-bottom: 20px; display: inline-block;
+        }
+        .connection-status.connected { 
+            background: rgba(40, 167, 69, 0.2); color: #28a745; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        .connection-status.disconnected { 
+            background: rgba(220, 53, 69, 0.2); color: #dc3545; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        
+        .dashboard { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 20px; 
+        }
+        .sensor-card, .valve-card { 
+            background: rgba(255, 255, 255, 0.95); 
+            border-radius: 20px; 
+            padding: 25px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+        .sensor-card:hover, .valve-card:hover { transform: translateY(-5px); }
+        
+        .value { 
+            font-size: 3em; font-weight: 800; margin: 15px 0; 
+            background: linear-gradient(45deg, #667eea, #764ba2); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .status { 
+            padding: 8px 16px; border-radius: 25px; font-weight: 600; 
+            display: inline-block; font-size: 0.9em;
+        }
+        .status.online { 
+            background: linear-gradient(45deg, #28a745, #20c997); color: white; 
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        .status.offline { 
+            background: linear-gradient(45deg, #dc3545, #fd7e14); color: white;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+        .valve-status { 
+            font-size: 1.8em; font-weight: 700; padding: 15px; 
+            border-radius: 15px; text-align: center;
+        }
+        .valve-status.open { 
+            background: linear-gradient(45deg, #007bff, #0056b3); color: white;
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        }
+        .valve-status.closed { 
+            background: #f8f9fa; color: #6c757d;
+        }
+        
+        .sparkline { 
+            width: 100%; height: 60px; border-radius: 12px; 
+            margin-top: 15px; background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .alerts-section { 
+            grid-column: 1 / -1; margin-top: 40px; 
+        }
+        .alerts-header { 
+            background: rgba(255,255,255,0.95); border-radius: 20px; 
+            padding: 20px; text-align: center; margin-bottom: 20px;
+        }
+        .alerts-container { 
+            background: rgba(255,255,255,0.95); border-radius: 20px; 
+            max-height: 400px; overflow-y: auto; padding: 20px;
+        }
+        .alert-item { 
+            padding: 15px; margin-bottom: 12px; border-radius: 12px; 
+            background: white; box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+        h3 { color: #2c3e50; margin-bottom: 15px; font-size: 1.4em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Real-Time IoT Sensor Dashboard</h1>
+        <div id="connection-status" class="connection-status">🔴 Connecting...</div>
+    </div>
+    
+    <div class="dashboard">
+        <!-- 🌡️ TEMPERATURE SENSOR -->
+        <div class="sensor-card">
+            <h3>🌡️ Temperature</h3>
+            <div id="temp-value" class="value">-- °C</div>
+            <div id="temp-status" class="status">Loading...</div>
+            <canvas id="temp-chart" class="sparkline"></canvas>
+        </div>
+
+        <!-- 📊 PRESSURE SENSOR -->
+        <div class="sensor-card">
+            <h3>📊 Pressure</h3>
+            <div id="pressure-value" class="value">-- bar</div>
+            <div id="pressure-status" class="status">Loading...</div>
+            <canvas id="pressure-chart" class="sparkline"></canvas>
+        </div>
+
+        <!-- 🔥 HEAT VALVE -->
+        <div class="valve-card">
+            <h3>🔥 Heat Valve</h3>
+            <div id="heat-valve-status" class="valve-status">Loading...</div>
+        </div>
+
+        <!-- ❄️ COOL VALVE -->
+        <div class="valve-card">
+            <h3>❄️ Cool Valve</h3>
+            <div id="cool-valve-status" class="valve-status">Loading...</div>
+        </div>
+
+        <!-- ⬅️ PRESSURE IN VALVE -->
+        <div class="valve-card">
+            <h3>⬅️ Pressure In</h3>
+            <div id="pressure-in-valve-status" class="valve-status">Loading...</div>
+        </div>
+
+        <!-- ➡️ PRESSURE OUT VALVE -->
+        <div class="valve-card">
+            <h3>➡️ Pressure Out</h3>
+            <div id="pressure-out-valve-status" class="valve-status">Loading...</div>
+        </div>
+    </div>
+
+    <!-- 🔔 ALERTS SECTION -->
+    <div class="alerts-section">
+        <div class="alerts-header">
+            <h2>🔔 Recent Alerts</h2>
+        </div>
+        <div id="alerts-list" class="alerts-container">
+            <div style="text-align: center; color: #6c757d; padding: 40px;">
+                Waiting for alerts...
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
